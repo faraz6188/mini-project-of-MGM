@@ -1,0 +1,141 @@
+body {
+    margin: 0px;
+    background-color: 	#f0ffff;
+    text-align: center;
+}
+footer {
+    text-align: center;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    clear: both;
+    }
+img {
+    width: 500px;
+    height: 500px;
+    margin:50px 10px 10px 10px;
+    transition: all 1s;
+    border: 3px solid black;
+	color: red;
+}
+img:hover {
+    transform: scale(1.1);
+}
+h1{
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    text-align: center;
+    margin-top: 10px;
+    margin:40px 40px 10px 10px;
+}
+.column{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.card-header {
+    padding: 10px;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+
+}
+button {
+    margin-top : 20px;
+    background-color: MediumSeaGreen;
+    color: white;
+    border-color: transparent;
+    padding: 20px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 16px;
+   margin: 8px 2px;
+   border-radius: 50%;
+}
+form {
+    margin: 20px 2px;
+}
+.contact-wrap {
+    margin: 20px 2px;
+}
+hr{
+    margin: 5%;
+    color: black;
+}
+span{
+    margin: 5px;
+}
+*{
+    margin: 0;
+    padding: 0;
+}
+#rate {
+    float: left;
+    height: 46px;
+    padding: 0 10px;
+}
+#rate:not(:checked) > input {
+    position:absolute;
+    top:-9999px;
+}
+#rate:not(:checked) > label {
+    float:right;
+    width:1em;
+    overflow:hidden;
+    white-space:nowrap;
+    cursor:pointer;
+    font-size:30px;
+    color:#ccc;
+}
+#rate:not(:checked) > label:before {
+    content: '★ ';
+}
+#rate > input:checked ~ label {
+    color: #ffc700;    
+}
+#rate:not(:checked) > label:hover,
+#rate:not(:checked) > label:hover ~ label {
+   color: #deb217;  
+}
+#rate > input:checked + label:hover,
+#rate > input:checked + label:hover ~ label,
+#rate > input:checked ~ label:hover,
+#rate > input:checked ~ label:hover ~ label,
+#rate > label:hover ~ input:checked ~ label {
+    color: #c59b08;
+}
+#rate {
+  display: block;
+  left: 0;
+  bottom: 0;
+  width: auto;
+}
+h2 {
+    text-align: center;
+}
+@import url('https://fonts.googleapis.com/css?family=Muli&display=swap');
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+
+	font-family: 'Muli', sans-serif;
+	flex-direction: column;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+}
+
+#count{
+	font-size: 50px;
+	margin: 0;
+}
+
+h3{
+	color: rgba(0, 0, 0, 0.8);
+	letter-spacing: 2px;
+	margin: 0;
+}
