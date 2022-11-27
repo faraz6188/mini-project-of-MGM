@@ -30,7 +30,7 @@ $('.contact-form').find('.form-control').each(function() {
   updateVisitCount();
   
   function updateVisitCount(){
-    fetch('https://api.countapi.xyz/update/http://127.0.0.1:5500/index.html#/?amount=1')
+    fetch('https://api.countapi.xyz/update/https://faraz6188.github.io/mini-project-of-MGM/?amount=1')
       .then(res => res.json())
       .then(res => {
         count.innerHTML = res.value
