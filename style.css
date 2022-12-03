@@ -2,13 +2,20 @@ body {
     margin: 0px;
     background-color: 	#f0ffff;
     text-align: center;
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-size: cover;
+
 }
+
 footer {
     text-align: center;
     left: 0;
     bottom: 0;
     width: 100%;
     clear: both;
+    align-items: center;
+    justify-content: center;
     }
 img {
     width: 500px;
@@ -21,23 +28,20 @@ img {
 img:hover {
     transform: scale(1.1);
 }
-h1{
+#count {
+    color: wheat;
+}
+h1 { 
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
     text-align: center;
     margin-top: 10px;
     margin:40px 40px 10px 10px;
+    color: black;
 }
 .column{
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-}
-.card-header {
-    padding: 10px;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-
 }
 button {
     margin-top : 20px;
@@ -68,6 +72,7 @@ span{
 *{
     margin: 0;
     padding: 0;
+    
 }
 #rate {
     float: left;
@@ -124,8 +129,6 @@ body {
 	font-family: 'Muli', sans-serif;
 	flex-direction: column;
 	display: flex;
-	align-items: center;
-	justify-content: center;
 
 }
 
@@ -134,8 +137,62 @@ body {
 	margin: 0;
 }
 
-h3{
-	color: rgba(0, 0, 0, 0.8);
+h2, h3{
 	letter-spacing: 2px;
 	margin: 0;
 }
+body {margin: 0;}
+
+ul.topnav {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+}
+
+ul.topnav li {float: left;}
+
+ul.topnav li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+ul.topnav li a:hover:not(.active) {background-color: #111;}
+
+ul.topnav li a.active {background-color: #04AA6D;
+border: #ffff;}
+
+ul.topnav li.centre {float: centre;}
+
+@media screen and (max-width: 600px) {
+  ul.topnav li.centre, 
+  ul.topnav li {float: none;}
+}
+
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+.info {
+        padding: 14px 28px;
+        font-size: 16px;
+        cursor:pointer;
+        color: dodgerblue;
+        margin-top : 20px;
+        background-color: transparent;
+        border-color: transparent;
+        padding: 20px;
+       text-align: center;
+       text-decoration: none;
+       display: inline-block;
+       font-size: 20px;
+       margin: 8px 2px;
+       border-radius: 80%;
+    }

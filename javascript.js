@@ -25,14 +25,12 @@ $('.contact-form').find('.form-control').each(function() {
     }
   })
 
-  const count = document.getElementById('count');
+  function myFunction() {
+    var txt;
+if (confirm("Press a button OK to know total views!")) {
 
-  updateVisitCount();
-  
-  function updateVisitCount(){
-    fetch('https://api.countapi.xyz/update/https://faraz6188.github.io/mini-project-of-MGM/?amount=1')
-      .then(res => res.json())
-      .then(res => {
-        count.innerHTML = res.value
-    });
+let count = Number(localStorage.getItem('count')) || 0;
+alert(`Total Website Views = ${count}`);
+localStorage.setItem('count', count + 1);
+}
   }
