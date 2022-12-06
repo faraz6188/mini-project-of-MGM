@@ -66,10 +66,10 @@ input#rate-5:checked ~ label{
   text-shadow: 0 0 20px #952;
 }
 #rate-1:checked ~ form header:before{
-  content: "I just hate it ";
+  content: "Just hate it ";
 }
 #rate-2:checked ~ form header:before{
-  content: "I don't like it ";
+  content: " Don't like it ";
 }
 #rate-3:checked ~ form header:before{
   content: "It is awesome ";
