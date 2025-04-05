@@ -52,7 +52,7 @@
                     localStorage.setItem('visitor_id', visitorId);
                 }
             } else {
-                // Fallback to sessionStorage or cookie
+                // Fallback to cookie
                 visitorId = generateVisitorId();
                 document.cookie = `visitor_id=${visitorId}; path=/`;
             }
