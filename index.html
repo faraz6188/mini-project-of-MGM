@@ -11,66 +11,105 @@
 
     <title>Mini Project</title>
     
-    <!-- Visitor Analytics Tracking Script -->
+    <!-- Updated Visitor Analytics Tracking Script -->
     <script>
-        (function() {
-            // Server URL - replace with your actual server address
-            const SERVER_URL = 'http://localhost:3000'; // Update this URL
-            
-            // Function to check if localStorage is available
-            function isLocalStorageAvailable() {
-                try {
-                    const testKey = 'test';
-                    localStorage.setItem(testKey, testKey);
-                    localStorage.removeItem(testKey);
-                    return true;
-                } catch (error) {
-                    return false;
-                }
+    (function() {
+        // Server URL - replace with your actual server address
+        const SERVER_URL = 'http://localhost:3000';
+        
+        // Function to check if localStorage is available
+        function isLocalStorageAvailable() {
+            try {
+                const testKey = 'test';
+                localStorage.setItem(testKey, testKey);
+                localStorage.removeItem(testKey);
+                return true;
+            } catch (error) {
+                return false;
             }
-            
-            // Function to generate a visitor ID
-            function generateVisitorId() {
-                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                    const r = Math.random() * 16 | 0;
-                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
+        }
+        
+        // Function to generate a visitor ID
+        function generateVisitorId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        // Function to check if it's a mobile device
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        // Function to handle cookies
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
             }
-            
-            // Wait for page to load
-            window.addEventListener('load', function() {
-                try {
-                    // Check if localStorage is available
-                    const localStorageAvailable = isLocalStorageAvailable();
-                    
-                    // Get or create visitor ID
-                    let visitorId;
-                    if (localStorageAvailable) {
-                        visitorId = localStorage.getItem('visitor_id');
-                        if (!visitorId) {
-                            visitorId = generateVisitorId();
-                            localStorage.setItem('visitor_id', visitorId);
-                        }
-                    } else {
-                        // Fallback to cookie
+            return null;
+        }
+        
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days*24*60*60*1000));
+            document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+        }
+        
+        // Wait for page to load
+        window.addEventListener('load', function() {
+            try {
+                // Check if localStorage is available
+                const localStorageAvailable = isLocalStorageAvailable();
+                
+                // Get or create visitor ID
+                let visitorId;
+                if (localStorageAvailable) {
+                    visitorId = localStorage.getItem('visitor_id');
+                    if (!visitorId) {
                         visitorId = generateVisitorId();
-                        document.cookie = `visitor_id=${visitorId}; path=/`;
+                        localStorage.setItem('visitor_id', visitorId);
                     }
-                    
-                    // Create visit data object
-                    const visitData = {
-                        visitor_id: visitorId,
-                        timestamp: new Date().toISOString(),
-                        url: window.location.href,
-                        path: window.location.pathname,
-                        referrer: document.referrer || "direct",
-                        user_agent: navigator.userAgent,
-                        screen_width: screen.width,
-                        screen_height: screen.height
+                } else {
+                    // Fallback to cookie
+                    visitorId = getCookie('visitor_id');
+                    if (!visitorId) {
+                        visitorId = generateVisitorId();
+                        setCookie('visitor_id', visitorId, 30);
+                    }
+                }
+                
+                // Create visit data object
+                const visitData = {
+                    visitor_id: visitorId,
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href,
+                    path: window.location.pathname,
+                    referrer: document.referrer || "direct",
+                    user_agent: navigator.userAgent,
+                    screen_width: screen.width,
+                    screen_height: screen.height
+                };
+                
+                // Choose tracking method based on device
+                if (isMobileDevice()) {
+                    console.log("Using image pixel tracking for mobile device");
+                    const imgTracker = new Image();
+                    imgTracker.onload = function() { 
+                        console.log("Mobile tracking image loaded successfully"); 
                     };
-                    
-                    // Send data to server
+                    imgTracker.onerror = function() { 
+                        console.error("Mobile tracking image failed to load");
+                        saveFallbackData(visitData, localStorageAvailable);
+                    };
+                    imgTracker.src = `${SERVER_URL}/api/track-pixel?data=${encodeURIComponent(JSON.stringify(visitData))}`;
+                } else {
+                    // Desktop tracking using fetch
                     fetch(`${SERVER_URL}/api/track`, {
                         method: 'POST',
                         headers: {
@@ -80,33 +119,49 @@
                         mode: 'cors',
                         credentials: 'omit'
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         console.log("Visit recorded on server:", data);
                     })
                     .catch(error => {
-                        console.error("Error sending data to server:", error);
-                        
-                        // Fallback to local storage if server is unavailable
-                        if (localStorageAvailable) {
-                            let allVisits = JSON.parse(localStorage.getItem('site_visits') || '[]');
-                            allVisits.push(visitData);
-                            localStorage.setItem('site_visits', JSON.stringify(allVisits));
-                        } else {
-                            // Fallback to cookie
-                            let allVisits = JSON.parse(document.cookie.replace(/(?:(?:^|.*;\s*)site_visits\s*\=\s*([^;]*).*$)|^.*$/, "$1") || '[]');
-                            allVisits.push(visitData);
-                            document.cookie = `site_visits=${JSON.stringify(allVisits)}; path=/`;
-                        }
+                        console.error("Error sending data to server:", error.name, error.message);
+                        saveFallbackData(visitData, localStorageAvailable);
                     });
-                } catch (error) {
-                    console.error("Error tracking visit:", error);
                 }
-            });
-        })();
+                
+                // Function to save data locally if server is unavailable
+                function saveFallbackData(data, useLocalStorage) {
+                    console.log("Using fallback storage method");
+                    if (useLocalStorage) {
+                        let allVisits = JSON.parse(localStorage.getItem('site_visits') || '[]');
+                        allVisits.push(data);
+                        localStorage.setItem('site_visits', JSON.stringify(allVisits));
+                        console.log("Data saved to localStorage");
+                    } else {
+                        try {
+                            let allVisits = JSON.parse(getCookie('site_visits') || '[]');
+                            allVisits.push(data);
+                            setCookie('site_visits', JSON.stringify(allVisits), 7);
+                            console.log("Data saved to cookie");
+                        } catch (e) {
+                            console.error("Failed to save to cookie:", e);
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error("Error tracking visit:", error);
+            }
+        });
+    })();
     </script>
   </head>
-  <body style="background-image: url('bg_img.png');">
+  <body style="background-image: url('bg_img.png');" onload="myFunction()">
       <ul class="topnav">
         <li><a class="active" href="#home">Home</a></li>
         <li><a href="rating.html">Ratings</a></li>
@@ -121,6 +176,7 @@
         <a href="https://faraz6188.github.io/Portfolio/">
           <img src="MFA.png" width="500px" height="500px">
         </a>
+      </div>
     </section>
     <h1 style="color: wheat;">A website with Simple resume generator, 5 Star Ratings & reviews and Views counter</h1>
 
