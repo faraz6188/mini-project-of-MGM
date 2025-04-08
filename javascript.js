@@ -25,15 +25,15 @@ $('.contact-form').find('.form-control').each(function() {
     }
   })
 
-  function myFunction() {
-    var txt;
-if (confirm("Press a button OK to know total views!")) {
+//   function myFunction() {
+//     var txt;
+// if (confirm("Press a button OK to know total views!")) {
 
-let count = Number(localStorage.getItem('count')) || 0;
-alert(`Total Website Views = ${count}`);
-localStorage.setItem('count', count + 1);
-}
-  }
+// let count = Number(localStorage.getItem('count')) || 0;
+// alert(`Total Website Views = ${count}`);
+// localStorage.setItem('count', count + 1);
+// }
+//   }
 
   var addDropBtn = "<div id=\"addDropBtn\"><div id=\"dropBtn\">－</div>&nbsp;<div id=\"addBtn\">＋</div></div>";
   $("body").append(addDropBtn);
