@@ -12,281 +12,97 @@
     <title>Mini Project</title>
     
     <!-- Cross-Platform Analytics Tracking Script -->
-    <script>
-    (function() {
-        // Server URL - replace with your actual server address (use your IP instead of localhost for mobile testing)
-        const SERVER_URL = 'http://localhost:3000';
-    // IMPORTANT: Replace with your actual publicly accessible server URL
-    
-    // Debug mode - set to false in production
-    const DEBUG = true;
-    
-    // Safe console log function
-    function debugLog(...args) {
-        if (DEBUG && window.console && window.console.log) {
-            console.log('[Analytics]', ...args);
-        }
-    }
-    
-    // Function to check if it's iOS Safari
-    function isIOSSafari() {
-        const ua = navigator.userAgent;
-        return /iPad|iPhone|iPod/.test(ua) && !window.MSStream && /Safari/.test(ua);
-    }
-    
-    // Function to check if it's a mobile device
-    function isMobileDevice() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-    
-    // Generate a more reliable visitor ID
-    function generateVisitorId() {
-        // Combine random values with timestamp for better uniqueness
-        const timestamp = new Date().getTime().toString(36);
-        const randomPart = Math.random().toString(36).substring(2, 10);
-        return `${timestamp}-${randomPart}`;
-    }
-    
-    // Multi-layered storage approach with fallbacks
-    function getVisitorId() {
-        let id;
-        
-        // Try all storage methods and use the first valid one
+   <script>
+    const API_BASE_URL = "https://visitor-tracker-server.onrender.com";
+
+    async function loadAnalytics() {
         try {
-            // First try localStorage as it's more persistent
-            id = localStorage.getItem('visitor_id');
-            if (id) {
-                debugLog('Visitor ID found in localStorage:', id);
-                return id;
+            const response = await fetch(`${API_BASE_URL}/api/analytics`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch analytics data');
             }
-            
-            // Then try sessionStorage
-            id = sessionStorage.getItem('visitor_id');
-            if (id) {
-                debugLog('Visitor ID found in sessionStorage:', id);
-                
-                // Copy to localStorage for persistence if possible
-                try { localStorage.setItem('visitor_id', id); } catch(e) {}
-                return id;
-            }
-            
-            // Try cookies
-            const cookieMatch = document.cookie.match(/(^|;)\s*visitor_id=([^;]+)/);
-            if (cookieMatch) {
-                id = cookieMatch[2];
-                debugLog('Visitor ID found in cookie:', id);
-                
-                // Copy to other storage methods
-                try { localStorage.setItem('visitor_id', id); } catch(e) {}
-                try { sessionStorage.setItem('visitor_id', id); } catch(e) {}
-                return id;
-            }
-        } catch(e) {
-            debugLog('Error accessing storage:', e);
-        }
-        
-        // Generate new ID if none found
-        id = generateVisitorId();
-        debugLog('Generated new visitor ID:', id);
-        
-        // Try to store in all available storage methods
-        try { 
-            localStorage.setItem('visitor_id', id);
-            debugLog('Saved to localStorage');
-        } catch(e) { 
-            debugLog('localStorage save failed:', e);
-        }
-        
-        try { 
-            sessionStorage.setItem('visitor_id', id);
-            debugLog('Saved to sessionStorage');
-        } catch(e) { 
-            debugLog('sessionStorage save failed:', e);
-        }
-        
-        try { 
-            // Use SameSite=Lax for better cross-browser compatibility
-            document.cookie = `visitor_id=${id}; path=/; max-age=${60*60*24*30}; SameSite=Lax`;
-            debugLog('Saved to cookie');
-        } catch(e) {
-            debugLog('Cookie save failed:', e);
-        }
-        
-        return id;
-    }
-    
-    // Function to detect if tracking is blocked
-    function isTrackingBlocked() {
-        try {
-            const testKey = '_test_tracking_';
-            localStorage.setItem(testKey, '1');
-            localStorage.removeItem(testKey);
-            return false;
-        } catch(e) {
-            return true;
-        }
-    }
-    
-    // Robust send tracking data function with retries
-    function sendTrackingData(data, endpoint, method = 'POST', retries = 2) {
-        return new Promise((resolve, reject) => {
-            let retryCount = 0;
-            
-            function attempt() {
-                let requestPromise;
-                
-                // Different handling based on method
-                if (method === 'GET') {
-                    // For GET requests (pixel/image tracking)
-                    const img = new Image();
-                    requestPromise = new Promise((imgResolve, imgReject) => {
-                        img.onload = imgResolve;
-                        img.onerror = imgReject;
-                        img.src = `${endpoint}?${new URLSearchParams(data).toString()}`;
-                    });
-                } else {
-                    // For POST requests
-                    requestPromise = fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data),
-                        mode: 'cors',
-                        credentials: 'omit',
-                        // Add fetch timeout
-                        signal: AbortSignal.timeout(5000) // 5 second timeout
-                    });
-                }
-                
-                requestPromise
-                    .then(resolve)
-                    .catch(error => {
-                        debugLog(`Tracking attempt ${retryCount + 1} failed:`, error);
-                        if (retryCount < retries) {
-                            retryCount++;
-                            // Exponential backoff
-                            setTimeout(attempt, 1000 * Math.pow(2, retryCount));
-                        } else {
-                            reject(error);
-                        }
-                    });
-            }
-            
-            attempt();
-        });
-    }
-    
-    // Main tracking function - wait for page load
-    function initTracking() {
-        try {
-            debugLog('Initializing tracking');
-            
-            // Check if tracking is blocked
-            if (isTrackingBlocked()) {
-                debugLog('Tracking appears to be blocked by browser');
-            }
-            
-            // Get visitor ID using multi-storage approach
-            const visitorId = getVisitorId();
-            
-            // Common visit data
-            const visitData = {
-                visitor_id: visitorId,
-                timestamp: new Date().toISOString(),
-                url: window.location.href,
-                path: window.location.pathname,
-                referrer: document.referrer || "direct",
-                user_agent: navigator.userAgent,
-                screen_width: screen.width,
-                screen_height: screen.height,
-                client_timestamp: Date.now() // Milliseconds since epoch
-            };
-            
-            debugLog('Visit data prepared:', visitData);
-            
-            // Special handling for iOS Safari
-            if (isIOSSafari()) {
-                debugLog("iOS Safari detected, using special tracking");
-                
-                // Use a simplified URL structure with minimal parameters
-                const iosData = {
-                    vid: visitorId,
-                    ts: Date.now(),
-                    url: encodeURIComponent(window.location.href),
-                    w: screen.width,
-                    h: screen.height
-                };
-                
-                // Use image method for iOS
-                sendTrackingData(iosData, `${SERVER_URL}/api/ios-track`, 'GET')
-                    .then(() => debugLog("iOS tracking successful"))
-                    .catch(error => debugLog("iOS tracking failed:", error));
-                
-                // Backup method: ping endpoint with fetch if possible
-                try {
-                    fetch(`${SERVER_URL}/api/track`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(visitData),
-                        mode: 'cors',
-                        keepalive: true // Allow request to complete even if page unloads
-                    }).catch(() => {}); // Silently catch errors
-                } catch(e) {}
-            }
-            // Other mobile devices
-            else if (isMobileDevice()) {
-                debugLog("Mobile device detected, using pixel tracking");
-                
-                // Use encoded data in query string
-                const pixelData = {
-                    data: encodeURIComponent(JSON.stringify(visitData))
-                };
-                
-                sendTrackingData(pixelData, `${SERVER_URL}/api/track-pixel`, 'GET')
-                    .then(() => debugLog("Mobile tracking successful"))
-                    .catch(error => debugLog("Mobile tracking failed:", error));
-            }
-            // Desktop tracking
-            else {
-                debugLog("Desktop browser detected, using fetch API");
-                
-                // Use modern fetch API with keepalive
-                sendTrackingData(visitData, `${SERVER_URL}/api/track`)
-                    .then(() => debugLog("Desktop tracking successful"))
-                    .catch(error => debugLog("Desktop tracking failed:", error));
-            }
-            
-            // Extra: Send tracking on page unload
-            window.addEventListener('beforeunload', function() {
-                // Update the visit duration
-                const exitData = {
-                    ...visitData,
-                    event_type: 'exit',
-                    duration: Date.now() - visitData.client_timestamp
-                };
-                
-                // Use sendBeacon if available (most reliable for exit tracking)
-                if (navigator.sendBeacon) {
-                    navigator.sendBeacon(
-                        `${SERVER_URL}/api/track`,
-                        JSON.stringify(exitData)
-                    );
-                }
+
+            const data = await response.json();
+
+            const uniqueVisitors = new Set(data.map(visit => visit.visitor_id)).size;
+            const mobileVisits = data.filter(visit => isMobileUA(visit.user_agent)).length;
+            const desktopVisits = data.length - mobileVisits;
+
+            document.getElementById('total-visits').textContent = data.length;
+            document.getElementById('unique-visitors').textContent = uniqueVisitors;
+            document.getElementById('mobile-visits').textContent = mobileVisits;
+            document.getElementById('desktop-visits').textContent = desktopVisits;
+
+            const tableBody = document.getElementById('visits-data');
+            tableBody.innerHTML = '';
+
+            data.slice(0, 100).forEach(visit => {
+                const row = document.createElement('tr');
+
+                const deviceType = isMobileUA(visit.user_agent) ? 'Mobile' : 'Desktop';
+                const deviceInfo = deviceType + getDeviceDetails(visit.user_agent);
+                const date = new Date(visit.timestamp);
+                const formattedDate = date.toLocaleString();
+
+                row.innerHTML = `
+                    <td>${visit.id}</td>
+                    <td title="${visit.visitor_id}">${visit.visitor_id.substring(0, 8)}...</td>
+                    <td>${formattedDate}</td>
+                    <td title="${visit.url}">${formatUrl(visit.url)}</td>
+                    <td>${visit.referrer || 'Direct'}</td>
+                    <td>${deviceInfo}</td>
+                    <td>${visit.screen_width}x${visit.screen_height}</td>
+                    <td>${visit.ip_address}</td>
+                `;
+
+                tableBody.appendChild(row);
             });
-            
+
         } catch (error) {
-            debugLog("Critical tracking error:", error);
+            console.error('Error loading analytics:', error);
+            document.getElementById('visits-data').innerHTML =
+                `<tr><td colspan="8" class="text-center text-danger">Error loading data: ${error.message}</td></tr>`;
         }
     }
-    
-    // For modern browsers, use DOMContentLoaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTracking);
-    } else {
-        // For browsers where the page is already loaded
-        initTracking();
+
+    function isMobileUA(userAgent) {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     }
-})();
-     </script>
+
+    function getDeviceDetails(userAgent) {
+        let details = '';
+        if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+            details = ' (iOS)';
+        } else if (userAgent.includes('Android')) {
+            details = ' (Android)';
+        }
+
+        if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+            details += ' Safari';
+        } else if (userAgent.includes('Chrome')) {
+            details += ' Chrome';
+        } else if (userAgent.includes('Firefox')) {
+            details += ' Firefox';
+        }
+
+        return details;
+    }
+
+    function formatUrl(url) {
+        if (!url) return 'Unknown';
+        try {
+            const urlObj = new URL(url);
+            return urlObj.pathname.length > 1 ?
+                urlObj.hostname + urlObj.pathname :
+                urlObj.hostname;
+        } catch (e) {
+            return url.substring(0, 30) + '...';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAnalytics);
+    setInterval(loadAnalytics, 30000);
+</script>
 
   </head>
   <body onload="myFunction()" style="background-image: url('bg_img.png');">
