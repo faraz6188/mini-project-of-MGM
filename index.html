@@ -11,105 +11,15 @@
 
     <title>Mini Project</title>
     
-    <!-- Cross-Platform Analytics Tracking Script -->
-   <script>
-    const API_BASE_URL = "https://visitor-tracker-server.onrender.com";
-
-    async function loadAnalytics() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/analytics`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch analytics data');
-            }
-
-            const data = await response.json();
-
-            const uniqueVisitors = new Set(data.map(visit => visit.visitor_id)).size;
-            const mobileVisits = data.filter(visit => isMobileUA(visit.user_agent)).length;
-            const desktopVisits = data.length - mobileVisits;
-
-            document.getElementById('total-visits').textContent = data.length;
-            document.getElementById('unique-visitors').textContent = uniqueVisitors;
-            document.getElementById('mobile-visits').textContent = mobileVisits;
-            document.getElementById('desktop-visits').textContent = desktopVisits;
-
-            const tableBody = document.getElementById('visits-data');
-            tableBody.innerHTML = '';
-
-            data.slice(0, 100).forEach(visit => {
-                const row = document.createElement('tr');
-
-                const deviceType = isMobileUA(visit.user_agent) ? 'Mobile' : 'Desktop';
-                const deviceInfo = deviceType + getDeviceDetails(visit.user_agent);
-                const date = new Date(visit.timestamp);
-                const formattedDate = date.toLocaleString();
-
-                row.innerHTML = `
-                    <td>${visit.id}</td>
-                    <td title="${visit.visitor_id}">${visit.visitor_id.substring(0, 8)}...</td>
-                    <td>${formattedDate}</td>
-                    <td title="${visit.url}">${formatUrl(visit.url)}</td>
-                    <td>${visit.referrer || 'Direct'}</td>
-                    <td>${deviceInfo}</td>
-                    <td>${visit.screen_width}x${visit.screen_height}</td>
-                    <td>${visit.ip_address}</td>
-                `;
-
-                tableBody.appendChild(row);
-            });
-
-        } catch (error) {
-            console.error('Error loading analytics:', error);
-            document.getElementById('visits-data').innerHTML =
-                `<tr><td colspan="8" class="text-center text-danger">Error loading data: ${error.message}</td></tr>`;
-        }
-    }
-
-    function isMobileUA(userAgent) {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    }
-
-    function getDeviceDetails(userAgent) {
-        let details = '';
-        if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
-            details = ' (iOS)';
-        } else if (userAgent.includes('Android')) {
-            details = ' (Android)';
-        }
-
-        if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
-            details += ' Safari';
-        } else if (userAgent.includes('Chrome')) {
-            details += ' Chrome';
-        } else if (userAgent.includes('Firefox')) {
-            details += ' Firefox';
-        }
-
-        return details;
-    }
-
-    function formatUrl(url) {
-        if (!url) return 'Unknown';
-        try {
-            const urlObj = new URL(url);
-            return urlObj.pathname.length > 1 ?
-                urlObj.hostname + urlObj.pathname :
-                urlObj.hostname;
-        } catch (e) {
-            return url.substring(0, 30) + '...';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', loadAnalytics);
-    setInterval(loadAnalytics, 30000);
-</script>
-
+    <!-- Analytics Tracking Script -->
+    <script src="/analytics-client.js"></script>
   </head>
-  <body onload="myFunction()" style="background-image: url('bg_img.png');">
+  <body style="background-image: url('bg_img.png');">
       <ul class="topnav">
         <li><a class="active" href="#home">Home</a></li>
         <li><a href="rating.html">Ratings</a></li>
         <li><a href="resume.html">Create Resume</a></li>
+        <li><a href="/dashboard">Analytics</a></li>
     </ul>
     
     <section class="column">
@@ -124,14 +34,36 @@
     </section>
     <h1 style="color: wheat;">A website with Simple resume generator, 5 Star Ratings & reviews and Views counter</h1>
 
-    <button class="info" onclick="myFunction()">Show total Views</button>
+    <button class="info" onclick="showViews()">Show total Views</button>
+    <div id="view-counter"></div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-    <script type="text/JavaScript" src="javascript.js"></script>
+    
+    <script>
+    function showViews() {
+      fetch('/api/analytics')
+        .then(response => response.json())
+        .then(data => {
+          const viewCount = data.length;
+          const uniqueVisitors = new Set(data.map(visit => visit.visitor_id)).size;
+          
+          document.getElementById('view-counter').innerHTML = 
+            `<div class="alert alert-success mt-3">
+              <p>Total page views: <strong>${viewCount}</strong></p>
+              <p>Unique visitors: <strong>${uniqueVisitors}</strong></p>
+            </div>`;
+        })
+        .catch(error => {
+          console.error('Error fetching view count:', error);
+          document.getElementById('view-counter').innerHTML = 
+            `<div class="alert alert-danger mt-3">Failed to fetch view count</div>`;
+        });
+    }
+    </script>
 
     <footer style="color: wheat;">
       Copyright © 2020 | Mini Project of MGM's CEN | Powered by Mohammed Faraz Ali & Khalid Masud Chaudhary
